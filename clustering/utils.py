@@ -129,7 +129,7 @@ def preprocess_features(npdata, pca=256):
         np.array of dim N * pca: data PCA-reduced, whitened and L2-normalized
     """
     _, ndim = npdata.shape
-    npdata =  npdata.astype('float32')
+    npdata = npdata.astype('float32')
 
     # # Apply PCA-whitening with Faiss
     # mat = faiss.PCAMatrix (ndim, pca, eigen_power=-0.5)

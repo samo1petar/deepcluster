@@ -1,5 +1,6 @@
 # deepcluster
 
+Python3 implementation of deepcluster.
 
 ## Install
 

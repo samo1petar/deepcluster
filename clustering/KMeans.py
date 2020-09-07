@@ -30,6 +30,8 @@ def run_kmeans(x, nmb_clusters, verbose=False):
     flat_config.device = 0
     index = faiss.GpuIndexFlatL2(res, d, flat_config)
 
+    centroids = faiss.vector_to_array(clus.centroids).reshape((-1, nmb_clusters))
+
     # perform the training
     clus.train(x, index)
     _, I = index.search(x, 1)
@@ -41,11 +43,10 @@ def run_kmeans(x, nmb_clusters, verbose=False):
         stats.at(i).obj for i in range(stats.size())
     ])
 
-
     if verbose:
         print('k-means loss evolution: {0}'.format(losses))
 
-    return [int(n[0]) for n in I], losses[-1]
+    return [int(n[0]) for n in I], losses[-1], centroids
 
 
 class KMeans(object):
@@ -61,11 +62,11 @@ class KMeans(object):
 
         # PCA-reducing, whitening and L2-normalization
         xb = preprocess_features(data)
-        # xb = data
 
         # cluster the data
-        I, loss = run_kmeans(xb, self.k, verbose)
+        I, loss, centroids = run_kmeans(xb, self.k, verbose)
 
+        self.centroids = centroids
         self.data = data
 
         self.images_lists = [[] for i in range(self.k)]
