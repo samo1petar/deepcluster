@@ -63,7 +63,7 @@ def main(args):
                                              num_workers=1,
                                              pin_memory=True)
 
-    features = compute_features(dataloader, model, len(dataset))
+    features = compute_features(dataloader, model, len(dataset), args.batch)
 
     algs = {
         'KMeans': clustering.KMeans,
