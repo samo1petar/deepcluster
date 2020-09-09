@@ -41,6 +41,8 @@ def parse_args():
     parser.add_argument('--verbose', action='store_true', help='chatty')
     parser.add_argument('--dropout', type=float, default=0.5, help='dropout percentage in Dropout layers (default: 0.5')
     parser.add_argument('--seed', type=int, default=None, help='random seed (default: None)')
+    parser.add_argument('--fine_tune', action='store_true', help='initialize top layer only once')
+
 
     return parser.parse_args()
 
@@ -154,6 +156,10 @@ def main(args):
 
         # train network with clusters as pseudo-labels
         end = time.time()
+
+        if args.fine_tune:
+            for x in range(1000):
+                loss = train(train_dataloader, model, criterion, optimizer, epoch)
 
         loss = train(train_dataloader, model, criterion, optimizer, epoch)
 
