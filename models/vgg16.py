@@ -14,13 +14,13 @@ __all__ = [ 'VGG', 'vgg16']
 
 class VGG(nn.Module):
 
-    def __init__(self, features, num_classes, sobel):
+    def __init__(self, features, num_classes, sobel, dropout=0.0):
         super(VGG, self).__init__()
         self.features = features
         self.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
             nn.ReLU(True),
-            nn.Dropout(0.0),
+            nn.Dropout(dropout),
             nn.Linear(4096, 4096),
             nn.ReLU(True)
         )
@@ -88,7 +88,7 @@ def make_layers(input_dim, batch_norm):
     return nn.Sequential(*layers)
 
 
-def vgg16(sobel=False, bn=True, out=1000):
+def vgg16(sobel=False, bn=True, out=1000, dropout=0.0):
     dim = 2 + int(not sobel)
-    model = VGG(make_layers(dim, bn), out, sobel)
+    model = VGG(make_layers(dim, bn), out, sobel, dropout)
     return model

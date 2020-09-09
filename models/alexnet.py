@@ -19,13 +19,13 @@ CFG = {
 
 
 class AlexNet(nn.Module):
-    def __init__(self, features, num_classes, sobel):
+    def __init__(self, features, num_classes, sobel, dropout=0.0):
         super(AlexNet, self).__init__()
         self.features = features
-        self.classifier = nn.Sequential(nn.Dropout(0.0),
+        self.classifier = nn.Sequential(nn.Dropout(dropout),
                             nn.Linear(256 * 6 * 6, 4096),
                             nn.ReLU(inplace=True),
-                            nn.Dropout(0.0),
+                            nn.Dropout(dropout),
                             nn.Linear(4096, 4096),
                             nn.ReLU(inplace=True))
 
@@ -92,7 +92,7 @@ def make_layers_features(cfg, input_dim, bn):
     return nn.Sequential(*layers)
 
 
-def alexnet(sobel=False, bn=True, out=1000):
+def alexnet(sobel=False, bn=True, out=1000, dropout=0.0):
     dim = 2 + int(not sobel)
-    model = AlexNet(make_layers_features(CFG['2012'], dim, bn=bn), out, sobel)
+    model = AlexNet(make_layers_features(CFG['2012'], dim, bn=bn), out, sobel, dropout)
     return model
