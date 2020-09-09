@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+import numpy as np
 from sklearn.metrics.cluster import normalized_mutual_info_score
 import torch
 import torch.nn as nn
@@ -55,7 +56,7 @@ def main(args):
     # CNN
     if args.verbose:
         print('Architecture: {}'.format(args.arch))
-    model = models.__dict__[args.arch](sobel=args.sobel, dropout=0.5)
+    model = models.__dict__[args.arch](sobel=args.sobel, dropout=args.dropout)
     fd = int(model.top_layer.weight.size()[1])
     model.top_layer = None
     model.features = torch.nn.DataParallel(model.features)
@@ -65,9 +66,9 @@ def main(args):
     # create optimizer
     optimizer = torch.optim.SGD(
         filter(lambda x: x.requires_grad, model.parameters()),
-        lr=args.lr,
+        lr=args.learning_rate,
         momentum=args.momentum,
-        weight_decay=10**args.wd,
+        weight_decay=10**args.weight_decay,
     )
 
     # define loss function
@@ -76,12 +77,12 @@ def main(args):
     restore(model, args.resume)
 
     # creating checkpoint repo
-    exp_check = os.path.join(args.exp, 'checkpoints')
+    exp_check = os.path.join(args.experiment, 'checkpoints')
     if not os.path.isdir(exp_check):
         os.makedirs(exp_check)
 
     # creating cluster assignments log
-    cluster_log = Logger(os.path.join(args.exp, 'clusters'))
+    cluster_log = Logger(os.path.join(args.experiment, 'clusters'))
 
     # preprocessing of data
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -177,7 +178,7 @@ def main(args):
                     'arch': args.arch,
                     'state_dict': model.state_dict(),
                     'optimizer' : optimizer.state_dict()},
-                   os.path.join(args.exp, 'checkpoint.pth.tar'))
+                   os.path.join(args.experiment, 'checkpoint.pth.tar'))
 
         # save cluster assignments
         cluster_log.log(cluster_alg.images_lists)
@@ -205,8 +206,8 @@ def train(loader, model, crit, opt, epoch):
     # create an optimizer for the last fc layer
     optimizer_tl = torch.optim.SGD(
         model.top_layer.parameters(),
-        lr=args.lr,
-        weight_decay=10**args.wd,
+        lr=args.learning_rate,
+        weight_decay=10**args.weight_decay,
     )
 
     end = time.time()
@@ -217,7 +218,7 @@ def train(loader, model, crit, opt, epoch):
         n = len(loader) * epoch + i
         if n % args.checkpoints == 0:
             path = os.path.join(
-                args.exp,
+                args.experiment,
                 'checkpoints',
                 'checkpoint_' + str(n / args.checkpoints) + '.pth.tar',
             )
