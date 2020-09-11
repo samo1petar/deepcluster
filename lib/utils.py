@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple
 
 def visualize(
         data      : Dict,
-        path      : str   = '/home/david/Datasets/Flickr',
+        path      : str   = '/home/results',
         acc_limit : float = 0.3,
 ) -> str: # TODO fix path
     d = datetime.datetime.now()
