@@ -1,5 +1,4 @@
 import argparse
-from IPython import embed
 import json
 import torch
 import torch.nn as nn
@@ -10,10 +9,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import faiss
 
-import clustering
-from clustering.utils import cluster_assign, match_predictions_and_cls
-from lib.data import transform_to_dict
-from lib.utils import accuracy, check_classes, visualize, get_available_classes, clean_predictions
+from clustering.utils import match_predictions_and_cls
+from lib.utils import clean_predictions, save_predictions_imgs, save_predictions_json
 import models
 from models.utils import compute_features, restore
 
@@ -22,14 +19,16 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='PyTorch Implementation of DeepCluster in Python3')
 
-    parser.add_argument('--data_centroids', type=str, help='Path to dataset from which centroids will be taken.')
-    parser.add_argument('--data_predict', type=str, help='Path to predict')
-    parser.add_argument('--arch', default='vgg16', type=str, choices=['alexnet', 'vgg16'], help='CNN architecture')
+    parser.add_argument('--data_predict', type=str, help='Path to directory to predict')
+    parser.add_argument('--cluster_index', type=str, default='cluster_index', help='path to clustering index file (default: cluster_index)')
+    parser.add_argument('--checkpoint', default='', type=str, metavar='PATH', help='path to checkpoint (default: None)')
+    parser.add_argument('--classes', type=str, default='classes.json', help='path to json file with classes description (default: classes.json)')
+    parser.add_argument('--save_dir', type=str, default='', help='path to dir to save results (default: <don\'t save>)')
+    parser.add_argument('--arch', default='vgg16', type=str, choices=['alexnet', 'vgg16'], help='CNN architecture. alexnet or vgg16 (default: vgg16)')
     parser.add_argument('--sobel', action='store_true', help='Sobel filtering')
-    parser.add_argument('--nmb_cluster', '--k', type=int, default=10000, help='number of cluster for k-means (default: 10000)')
     parser.add_argument('--cluster_alg', default='KMeans', type=str, choices=['KMeans', 'PIC'], help='clustering algorithm (default: Kmeans)')
     parser.add_argument('--batch', default=256, type=int, help='mini-batch size (default: 256)')
-    parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to checkpoint (default: None)')
+    parser.add_argument('--top_n', type=int, default=1, help='top N for accuracy (default: 1)')
 
     return parser.parse_args()
 
@@ -48,7 +47,7 @@ def main(args):
     model.top_layer = None
     model.classifier = nn.Sequential(*list(model.classifier.children())[:-1])
 
-    restore(model, args.resume)
+    restore(model, args.checkpoint)
 
     # preprocessing of data
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -59,47 +58,7 @@ def main(args):
            transforms.ToTensor(),
            normalize]
 
-    '''
-    dataset = datasets.ImageFolder(args.data_centroids, transform=transforms.Compose(tra))
-
-    dataloader = torch.utils.data.DataLoader(dataset,
-                                             batch_size=args.batch,
-                                             num_workers=1,
-                                             pin_memory=True)
-
-    features = compute_features(dataloader, model, len(dataset), args.batch)
-
-    algs = {
-        'KMeans': clustering.KMeans,
-        'PIC': clustering.PIC,
-    }
-    cluster_alg = algs[args.cluster_alg](args.nmb_cluster)
-
-    loss = cluster_alg.cluster(features, verbose=True)
-
-    faiss.write_index(faiss.index_gpu_to_cpu(cluster_alg.index), 'cluster_index')
-
-    embed()
-
-    train_dataset = cluster_assign(cluster_alg.images_lists, dataset.imgs)
-
-    data = transform_to_dict(train_dataset.imgs)
-    
-    # save_data(data)
-    available_classes = get_available_classes(data, thr_perc=0.3)
-    with open('available_classes.json', 'w') as f:
-        json.dump(available_classes, f, indent=4)
-
-    accuracy(data)
-
-    exit()
-
-    '''
-
-    # save_dir = visualize(data)
-    # check_classes(save_dir, train_dataset.imgs)
-
-    index = faiss.read_index('cluster_index')
+    index = faiss.read_index(args.cluster_index)
 
     with open('available_classes.json', 'r') as f:
         available_classes = json.load(f)
@@ -111,32 +70,34 @@ def main(args):
         num_workers=1,
         pin_memory=True,
     )
+    print ('Computing features...')
     features_predict = compute_features(dataloader_predict, model, len(dataset_predict), args.batch)
 
-    embed()
-
+    print ('Classifying features...')
     D, I = index.search(features_predict, 10)
 
     I = clean_predictions(I, available_classes)
 
     predictions = match_predictions_and_cls(I, dataset_predict.imgs, available_classes)
 
-    all_classes = set(available_classes.keys())
+    for x in predictions:
+        print(predictions[x]['real_cls'], predictions[x]['cls_str'], x.rsplit('/', 2)[1] + '_' + x.rsplit('/', 2)[2])
+
+    if args.save_dir:
+        print ('Saving images and predictions json')
+        save_predictions_imgs(predictions, args.save_dir)
+        save_predictions_json(predictions, args.save_dir)
 
     correct = 0
     wrong = 0
+
     for x in predictions:
-        if predictions[x]['real_cls'] in all_classes:
-            if predictions[x]['real_cls'] in predictions[x]['cls_str'][:1]:
+        if predictions[x]['real_cls'] in available_classes.values():
+            if predictions[x]['real_cls'] in predictions[x]['cls_str'][:args.top_n]:
                 correct += 1
             else:
                 wrong += 1
-    print ('Accuracy is: ', correct / (correct + wrong))
-
-    for x in predictions:
-        print(predictions[x]['real_cls'], predictions[x]['cls_str'])
-
-    embed()
+    print ('Accuracy for known classes is: ', correct / (correct + wrong))
 
 
 if __name__ == '__main__':

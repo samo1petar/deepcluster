@@ -1,11 +1,13 @@
 #!/bin/bash
 
 CUDA_VISIBLE_DEVICES=0 python predict.py \
-  --data_centroids '/home/david/Datasets/Flickr/Flickr25K' \
-  --data_predict '/home/david/Datasets/Flickr/Flickr15K/images' \
+  --data_predict '/home/david/Datasets/Flickr/test' \
+  --cluster_index '/home/david/Projects/deepcluster/cluster_index' \
+  --checkpoint '/home/david/Projects/deepcluster/checkpoint.pth.tar' \
+  --classes 'available_classes.json' \
+  --save_dir '/home/david/Datasets/predictions' \
   --arch 'vgg16' \
-  --nmb_cluster 1000 \
   --cluster_alg 'KMeans' \
   --batch 32 \
-  --resume '/home/david/Projects/deepcluster/checkpoint.pth.tar' \
+  --top_n 1 \
   --sobel

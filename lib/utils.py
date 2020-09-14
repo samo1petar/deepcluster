@@ -2,6 +2,7 @@ import os
 import datetime
 import numpy as np
 import pickle
+import json
 from shutil import copyfile
 from torch.utils.data.sampler import Sampler
 from typing import Dict, List, Tuple
@@ -170,3 +171,18 @@ def clean_predictions(I: np.ndarray, available_classes: Dict[int, str]) -> np.nd
             new_i.extend([-1] * (5 - len(new_i)))
         new_I.append(new_i)
     return np.array(new_I)
+
+
+def save_predictions_imgs(predictions: Dict[str, Dict], save_dir: str) -> None :
+    for x in predictions:
+        dir_path = os.path.join(save_dir, predictions[x]['cls_str'][0])
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+        copyfile(x, os.path.join(dir_path, x.rsplit('/', 2)[1] + '_' + x.rsplit('/', 1)[1]))
+
+
+def save_predictions_json(predictions: Dict[str, Dict], save_dir: str, file_name: str = 'predictions.json') -> None :
+    for x in predictions:
+        predictions[x]['cls_id'] = predictions[x]['cls_id'].tolist()
+    with open(os.path.join(save_dir, file_name), 'w')as f:
+        json.dump(predictions, f)
