@@ -20,7 +20,7 @@ $ pip install -r requirements.txt
 
 - Python3.6 +
 - GPU
-- Cuda
+- Cuda 10.2
 
 ## Pretrained models
 
