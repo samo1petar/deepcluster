@@ -6,15 +6,15 @@ CUDA_VISIBLE_DEVICES=0 python train_fine_tune.py \
     --nmb_cluster 1000 \
     --cluster_alg 'KMeans' \
     --batch 16 \
-    --resume '/home/david/Projects/deepcluster/deepcluster_models/vgg16/checkpoint.pth.tar' \
-    --exp '/home/david/Projects/deepcluster/experiments/exp_3' \
+    --resume '/home/david/Projects/deepcluster/checkpoint.pth.tar' \
+    --exp '/home/david/Projects/deepcluster/experiments/exp_4_softmax_drop_0.8' \
     --lr 0.0005 \
     --wd -5 \
     --workers 6 \
     --start_epoch 425 \
-    --epochs 500 \
+    --epochs 450 \
     --momentum 0.9 \
-    --checkpoints 1500 \
+    --checkpoints 250000 \
     --reassign 1 \
     --sobel \
     --verbose \

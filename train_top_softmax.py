@@ -1,8 +1,8 @@
 import argparse
 import os
+from random import shuffle
 import time
 import numpy as np
-from sklearn.metrics.cluster import normalized_mutual_info_score
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -11,11 +11,11 @@ import torch.optim
 import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-import clustering
-from clustering.utils import cluster_assign, arrange_clustering, cluster_assign_with_original_labels
+from clustering.utils import cluster_assign_with_original_labels
 import models
-from models.utils import compute_features, restore
-from lib.utils import AverageMeter, Logger, UnifLabelSampler
+from IPython import embed
+from models.utils import compute_tensor_features, restore
+from lib.utils import AverageMeter, save_losses
 
 
 def parse_args():
@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument('--start_epoch', type=int, default=0, help='manual epoch number (useful on restarts) (default: 0)')
     parser.add_argument('--epochs', type=int, default=200, help='number of total epochs to run (default: 200)')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum (default: 0.9)')
-    parser.add_argument('--checkpoints', type=int, default=25000, help='how many iterations between two checkpoints (default: 25000)')
+    parser.add_argument('--checkpoints', type=int, default=250000, help='how many iterations between two checkpoints (default: 25000)')
     parser.add_argument('--reassign', type=float, default=1., help='how many epochs of training between two consecutive reassignments of clusters (default: 1)')
     parser.add_argument('--verbose', action='store_true', help='chatty')
     parser.add_argument('--dropout', type=float, default=0.5, help='dropout percentage in Dropout layers (default: 0.5')
@@ -64,14 +64,6 @@ def main(args):
     model.cuda()
     cudnn.benchmark = True
 
-    # create optimizer
-    optimizer = torch.optim.SGD(
-        filter(lambda x: x.requires_grad, model.parameters()),
-        lr=args.learning_rate,
-        momentum=args.momentum,
-        weight_decay=10**args.weight_decay,
-    )
-
     # define loss function
     criterion = nn.CrossEntropyLoss().cuda()
 
@@ -81,9 +73,6 @@ def main(args):
     exp_check = os.path.join(args.experiment, 'checkpoints')
     if not os.path.isdir(exp_check):
         os.makedirs(exp_check)
-
-    # creating cluster assignments log
-    cluster_log = Logger(os.path.join(args.experiment, 'clusters'))
 
     # preprocessing of data
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -99,98 +88,116 @@ def main(args):
     if args.verbose:
         print('Load dataset: {0:.2f} s'.format(time.time() - end))
 
-    dataloader = torch.utils.data.DataLoader(dataset,
-                                             batch_size=args.batch,
-                                             num_workers=args.workers,
-                                             pin_memory=True)
+    imgs = dataset.imgs
+    shuffle(imgs)
+    train_imgs = imgs[:int(0.8 * len(imgs))]
+    test_imgs = imgs[int(0.8 * len(imgs)):]
 
-    algs = {
-        'KMeans': clustering.KMeans,
-        'PIC': clustering.PIC,
-    }
-    cluster_alg = algs[args.cluster_alg](args.nmb_cluster)
+    train_dataset = cluster_assign_with_original_labels(train_imgs)
+    train_dataloader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=args.batch,
+        num_workers=args.workers,
+        pin_memory=True,
+        shuffle=True,
+    )
 
-    # training convnet with cluster_alg
+    test_dataset = cluster_assign_with_original_labels(test_imgs)
+    test_dataloader = torch.utils.data.DataLoader(
+        test_dataset,
+        batch_size=args.batch,
+        num_workers=args.workers,
+        pin_memory=True,
+        shuffle=True,
+    )
+
+    train_features, train_targets = compute_tensor_features(train_dataloader, model, args.batch)
+    test_features, test_targets = compute_tensor_features(test_dataloader, model, args.batch)
+
+    top_layer = nn.Sequential(nn.Linear(4096, 4096), nn.Dropout(0.8), nn.Linear(4096, 251)) #, nn.Softmax(dim=1))
+    top_layer[0].weight.data.normal_(0, 0.01)
+    top_layer[0].bias.data.zero_()
+    top_layer[2].weight.data.normal_(0, 0.01)
+    top_layer[2].bias.data.zero_()
+    top_layer.cuda()
+
+    # create an optimizer for the top layer
+    optimizer = torch.optim.SGD(
+        top_layer.parameters(),
+        lr=args.learning_rate,
+        weight_decay=10**args.weight_decay,
+    )
+
+    train_losses = []
+    test_losses = []
+
+    train_losses.append(test(train_features, train_targets, top_layer, criterion, args.start_epoch))
+    test_losses.append(test(test_features, test_targets, top_layer, criterion, args.start_epoch))
+
     for epoch in range(args.start_epoch, args.epochs):
-        end = time.time()
 
-        # remove head
-        model.top_layer = None
-        model.classifier = nn.Sequential(*list(model.classifier.children())[:-1])
+        train_loss = train(train_features, train_targets, top_layer, criterion, optimizer, epoch)
+        test_loss = test(test_features, test_targets, top_layer, criterion, epoch, 'Test')
+        test(train_features, train_targets, top_layer, criterion, epoch, 'Train')
 
-        # get the features for the whole dataset
-        features = compute_features(dataloader, model, len(dataset), args.batch)
+        train_losses.append(train_loss)
+        test_losses.append(test_loss)
 
-        # cluster the features
         if args.verbose:
-            print('Cluster the features')
-        clustering_loss = cluster_alg.cluster(features, verbose=args.verbose)
-
-        # assign pseudo-labels
-        if args.verbose:
-            print('Assign real labels')
-        # train_dataset = cluster_assign(cluster_alg.images_lists,
-        #                                           dataset.imgs)
-        train_dataset = cluster_assign_with_original_labels(dataset.imgs)
-
-        # uniformly sample per target
-        sampler = UnifLabelSampler(int(args.reassign * len(train_dataset)),
-                                   cluster_alg.images_lists)
-
-        train_dataloader = torch.utils.data.DataLoader(
-            train_dataset,
-            batch_size=args.batch,
-            num_workers=args.workers,
-            sampler=sampler,
-            pin_memory=True,
-        )
-
-        # set last fully connected layer
-        mlp = list(model.classifier.children())
-        mlp.append(nn.ReLU(inplace=True).cuda())
-        model.classifier = nn.Sequential(*mlp)
-        model.top_layer = nn.Linear(fd, len(cluster_alg.images_lists))
-        model.top_layer.weight.data.normal_(0, 0.01)
-        model.top_layer.bias.data.zero_()
-        model.top_layer.cuda()
-
-        # train network with clusters as pseudo-labels
-        end = time.time()
-
-        for x in range(1000):
-            loss = train(train_dataloader, model, criterion, optimizer, epoch)
-
-        # print log
-        if args.verbose:
-            print('###### Epoch [{0}] ###### \n'
-                  'Time: {1:.3f} s\n'
-                  'Clustering loss: {2:.3f} \n'
-                  'ConvNet loss: {3:.3f}'
-                  .format(epoch, time.time() - end, clustering_loss, loss))
-            try:
-                nmi = normalized_mutual_info_score(
-                    arrange_clustering(cluster_alg.images_lists),
-                    arrange_clustering(cluster_log.data[-1])
-                )
-                print('NMI against previous assignment: {0:.3f}'.format(nmi))
-            except IndexError:
-                pass
+            print('###### Epoch [{}] ###### \n'
+                  'Train Loss: {:.3f} s\n'
+                  'Test Loss: {:.3f}'
+                  .format(epoch, train_loss, test_loss))
             print('####################### \n')
-        # save running checkpoint
+
         torch.save({'epoch': epoch + 1,
-                    'arch': args.arch,
-                    'state_dict': model.state_dict(),
-                    'optimizer' : optimizer.state_dict()},
-                   os.path.join(args.experiment, 'checkpoint.pth.tar'))
+                    'arch': 'top_layer',
+                    'state_dict': top_layer.state_dict()},
+                   os.path.join(args.experiment, 'checkpoints', 'checkpoint_' + str(epoch) + '.pth.tar'))
 
-        # save cluster assignments
-        cluster_log.log(cluster_alg.images_lists)
+    save_losses(train_losses, test_losses, os.path.join(args.experiment, 'loss.json'))
 
 
-def train(loader, model, crit, opt, epoch):
+def test(features, targets, model, crit, epoch, text=''):
+    losses = AverageMeter()
+    model.eval()
+
+    correct = 0
+    wrong = 0
+
+    with torch.no_grad():
+        size = features.shape[0]
+        for i, (input_tensor, target) in enumerate(zip(features, targets)):
+
+            target = target.cuda()
+            input_var = torch.autograd.Variable(input_tensor.cuda())
+            target_var = torch.autograd.Variable(target)
+
+            output = model(input_var)
+            loss = crit(output, target_var)
+
+            losses.update(loss.data.item(), input_tensor.shape[0])
+
+            output_np = output.data.cpu().numpy()
+            prediction = np.argmax(output_np, axis=1)
+            target_np = target.cpu().numpy()
+
+            correct += np.where(prediction == target_np)[0].shape[0]
+            wrong += np.where(prediction != target_np)[0].shape[0]
+
+    print('Epoch: [{0}][{1}/{2}]\t'
+          'Loss: {loss.val:.4f} ({loss.avg:.4f})\t'
+          '{3} Acc: {4}'
+          .format(epoch, i, size, text, correct / (correct + wrong), loss=losses))
+
+    return losses.avg
+
+
+def train(features, targets, model, crit, opt, epoch):
     """Training of the CNN.
         Args:
-            loader (torch.utils.data.DataLoader): Data loader
+            features (torch.tensor): [N, batch, cls_num]
+            targets (torch.tensor): [N, batch]
             model (nn.Module): CNN
             crit (torch.nn): loss
             opt (torch.optim.SGD): optimizer for every parameters with True
@@ -200,25 +207,17 @@ def train(loader, model, crit, opt, epoch):
     batch_time = AverageMeter()
     losses = AverageMeter()
     data_time = AverageMeter()
-    forward_time = AverageMeter()
-    backward_time = AverageMeter()
 
     # switch to train mode
     model.train()
 
-    # create an optimizer for the last fc layer
-    optimizer_tl = torch.optim.SGD(
-        model.top_layer.parameters(),
-        lr=args.learning_rate,
-        weight_decay=10**args.weight_decay,
-    )
-
     end = time.time()
-    for i, (input_tensor, target) in enumerate(loader):
+    size = features.shape[0]
+    for i, (input_tensor, target) in enumerate(zip(features, targets)):
         data_time.update(time.time() - end)
 
         # save checkpoint
-        n = len(loader) * epoch + i
+        n = size * epoch + i
         if n % args.checkpoints == 0:
             path = os.path.join(
                 args.experiment,
@@ -229,12 +228,12 @@ def train(loader, model, crit, opt, epoch):
                 print('Save checkpoint at: {0}'.format(path))
             torch.save({
                 'epoch': epoch + 1,
-                'arch': args.arch,
+                'arch': 'top_layer',
                 'state_dict': model.state_dict(),
                 'optimizer' : opt.state_dict()
             }, path)
 
-        target = target.cuda(async=True)
+        target = target.cuda()
         input_var = torch.autograd.Variable(input_tensor.cuda())
         target_var = torch.autograd.Variable(target)
 
@@ -246,10 +245,8 @@ def train(loader, model, crit, opt, epoch):
 
         # compute gradient and do SGD step
         opt.zero_grad()
-        optimizer_tl.zero_grad()
         loss.backward()
         opt.step()
-        optimizer_tl.step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -260,7 +257,7 @@ def train(loader, model, crit, opt, epoch):
                   'Time: {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data: {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'Loss: {loss.val:.4f} ({loss.avg:.4f})'
-                  .format(epoch, i, len(loader), batch_time=batch_time,
+                  .format(epoch, i, size, batch_time=batch_time,
                           data_time=data_time, loss=losses))
 
     return losses.avg
