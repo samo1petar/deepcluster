@@ -19,11 +19,11 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='PyTorch Implementation of DeepCluster in Python3')
 
-    parser.add_argument('--data_predict', type=str, help='Path to directory to predict')
+    parser.add_argument('--data', type=str, help='Path to directory to predict')
     parser.add_argument('--cluster_index', type=str, default='cluster_index', help='path to clustering index file (default: cluster_index)')
     parser.add_argument('--checkpoint', default='', type=str, metavar='PATH', help='path to checkpoint (default: None)')
     parser.add_argument('--classes', type=str, default='classes.json', help='path to json file with classes description (default: classes.json)')
-    parser.add_argument('--save_dir', type=str, default='', help='path to dir to save results (default: <don\'t save>)')
+    parser.add_argument('--save', type=str, default='', help='path to dir to save results (default: <don\'t save>)')
     parser.add_argument('--arch', default='vgg16', type=str, choices=['alexnet', 'vgg16'], help='CNN architecture. alexnet or vgg16 (default: vgg16)')
     parser.add_argument('--sobel', action='store_true', help='Sobel filtering')
     parser.add_argument('--cluster_alg', default='KMeans', type=str, choices=['KMeans', 'PIC'], help='clustering algorithm (default: Kmeans)')
@@ -63,7 +63,7 @@ def main(args):
     with open('available_classes.json', 'r') as f:
         available_classes = json.load(f)
 
-    dataset_predict = datasets.ImageFolder(args.data_predict, transform=transforms.Compose(tra))
+    dataset_predict = datasets.ImageFolder(args.data, transform=transforms.Compose(tra))
     dataloader_predict = torch.utils.data.DataLoader(
         dataset_predict,
         batch_size=args.batch,
@@ -83,10 +83,10 @@ def main(args):
     for x in predictions:
         print(predictions[x]['real_cls'], predictions[x]['cls_str'], x.rsplit('/', 2)[1] + '_' + x.rsplit('/', 2)[2])
 
-    if args.save_dir:
+    if args.save:
         print ('Saving images and predictions json')
-        save_predictions_imgs(predictions, args.save_dir)
-        save_predictions_json(predictions, args.save_dir)
+        save_predictions_imgs(predictions, args.save)
+        save_predictions_json(predictions, args.save)
 
     correct = 0
     wrong = 0

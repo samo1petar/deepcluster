@@ -22,6 +22,12 @@ Create docker image:
 ```
 $ bash docker_build.sh
 ```
+Run scripts through docker (more on that bellow):
+```
+$ bash docker_scripts/test.sh /path/to/dataset [optional: /path/to/save/data]
+$ bash docker_scripts/train.sh /path/to/dataset /path/to/save/experiment
+$ bash docker_scripts/train_fine_tune.sh /path/to/dataset /path/to/save/experiment
+```
 
 ## Requirements
 
@@ -66,6 +72,11 @@ If `save` parameter is set, it also saves images grouped by KMeans.
 Note: `data` parameter needs to point to one level above directory with images. For example, data='/path/to/dataset', where images are in subdir like '/path/to/dataset/car/image_N.jpg'
 
 Note: if `save` parameter is set, script will create one dir for every centroid. Only the centroids with dominating classes ( > 30% of the same class ) will have class name in dir name.
+It is considered that all other centroids can't be assigned with a single class.
+
+Note: If seeds are not set, you can expect slightly different results from call to call.
+This is due to random initialization of centroids start position of KMeans algorithm.
+With the given model you should expect around 75% accuracy.
 
 For docker run (build image first)
 ```
