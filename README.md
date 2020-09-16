@@ -16,6 +16,13 @@ $ pip install faiss-cpu==1.6.3 --no-cache
 $ pip install -r requirements.txt
 ```
 
+## Docker
+
+Create docker image:
+```
+$ bash docker_build.sh
+```
+
 ## Requirements
 
 - Python3.6 +
@@ -31,13 +38,6 @@ For prediction classes and index are needed.
 Download classes from [here](https://drive.google.com/file/d/1iDRRwjkNC1Pf4zD7OswGkFr163cjXo0l/view?usp=sharing).
 
 Download index from [here](https://drive.google.com/file/d/1EJtOQBbkroq43TvmQA2IHIPAluceFn0w/view?usp=sharing).
-
-## Docker
-
-Create docker image:
-```
-$ bash docker_build.sh
-```
 
 ## Dataset
 
@@ -141,12 +141,55 @@ arguments:
 
 ```
 
-#### Fine tune
+### Fine tune
 
-Fine tune script is in branch `origin/script/fine_tune`. Checkout the branch first to use fine tune training.
+
+Fine tune script is used for adjusting model parameters to Flickr25K dataset.
+
+For docker run (build image first)
 ```
-$ git checkout origin/script/fine-tune
-$ bash train_fine_tune.sh
+$ bash docker_scripts/train_fine_tune.sh /path/to/dataset /path/to/save/experiment
+```
+
+For local run, setup `data`, `exp` and `resume` parameters in train_fine_tune.sh and run
+```
+$ bash scripts/train_fine_tune.sh
+```
+
+or call python script directly
+```
+$ python train_fine_tune.py [-h] [--data DATA] [--arch {alexnet,vgg16}]
+                            [--sobel] [--nmb_cluster NMB_CLUSTER]
+                            [--cluster_alg {KMeans,PIC}] [--batch BATCH]
+                            [--resume PATH] [--experiment PATH]
+                            [--learning_rate LEARNING_RATE]
+                            [--weight_decay WEIGHT_DECAY] [--workers WORKERS]
+                            [--start_epoch START_EPOCH] [--epochs EPOCHS]
+                            [--momentum MOMENTUM] [--checkpoints CHECKPOINTS]
+                            [--reassign REASSIGN] [--verbose]
+                            [--dropout DROPOUT] [--seed SEED]
+
+arguments:
+  -h, --help            show this help message and exit
+  --data DATA           Path to dataset.
+  --arch                CNN architecture. alexnet or vgg16
+  --sobel               Sobel filtering
+  --nmb_cluster, --k    number of cluster for k-means (default: 1000)
+  --cluster_alg         clustering algorithm (default: Kmeans)
+  --batch               mini-batch size (default: 256)
+  --resume              path to checkpoint (default: None)
+  --experiment, --exp   path to dir where train will be saved
+  --learning_rate, --lr learning rate
+  --weight_decay, --wd  weight decay
+  --workers             number of data loading workers (default: 4)
+  --start_epoch         manual epoch number (useful on restarts) (default: 0)
+  --epochs              number of total epochs to run (default: 200)
+  --momentum            momentum (default: 0.9)
+  --checkpoints         how many iterations between two checkpoints (default: 25000)
+  --reassign            how many epochs of training between two consecutive reassignments of clusters (default: 1)
+  --verbose             chatty
+  --dropout             dropout percentage in Dropout layers (default: 0.5
+  --seed                random seed (default: None)
 ```
 
 

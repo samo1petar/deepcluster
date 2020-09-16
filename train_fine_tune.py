@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--data', type=str, help='Path to dataset.')
     parser.add_argument('--arch', type=str, default='vgg16', choices=['alexnet', 'vgg16'], help='CNN architecture')
     parser.add_argument('--sobel', action='store_true', help='Sobel filtering')
-    parser.add_argument('--nmb_cluster', '--k', type=int, default=10000, help='number of cluster for k-means (default: 10000)')
+    parser.add_argument('--nmb_cluster', '--k', type=int, default=1000, help='number of cluster for k-means (default: 1000)')
     parser.add_argument('--cluster_alg', default='KMeans', type=str, choices=['KMeans', 'PIC'], help='clustering algorithm (default: Kmeans)')
     parser.add_argument('--batch', type=int, default=256, help='mini-batch size (default: 256)')
     parser.add_argument('--resume', type=str, default='', metavar='PATH', help='path to checkpoint (default: None)')

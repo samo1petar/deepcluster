@@ -7,7 +7,7 @@ CUDA_VISIBLE_DEVICES=0 python train_fine_tune.py \
     --cluster_alg 'KMeans' \
     --batch 16 \
     --resume '/home/david/Projects/deepcluster/deepcluster_models/vgg16/checkpoint.pth.tar' \
-    --exp '/home/david/Projects/deepcluster/experiments/exp_3' \
+    --exp '/home/david/Projects/deepcluster/experiments/exp_8_test' \
     --lr 0.0005 \
     --wd -5 \
     --workers 6 \
