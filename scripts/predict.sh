@@ -1,11 +1,11 @@
 #!/bin/bash
 
 CUDA_VISIBLE_DEVICES=0 python predict.py \
-  --data '/home/david/Datasets/Flickr/test' \
-  --cluster_index '/home/david/Projects/deepcluster/cluster_index' \
-  --checkpoint '/home/david/Projects/deepcluster/checkpoint.pth.tar' \
-  --classes 'available_classes.json' \
-  --save '/home/david/Datasets/predictions' \
+  --data '/path/to/data/like/Flickr25K' \
+  --cluster_index '/path/to/cluster_index' \
+  --checkpoint '/path/to/checkpoint.pth.tar' \
+  --classes '/path/to/available_classes.json' \
+  --save '/path/to/save_dir' \
   --arch 'vgg16' \
   --cluster_alg 'KMeans' \
   --batch 32 \

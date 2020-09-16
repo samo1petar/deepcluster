@@ -206,32 +206,32 @@ arguments:
 
 #### Prediction
 
-Prediction script is in branch `origin/prediction`. Checkout the branch first to use prediction.
-
-Set up parameters in predict.sh and run
+For docker run (build image first)
 ```
-$ git checkout origin/prediction
-$ bash predict.sh
+$ bash docker_scripts/predict.sh /path/to/dataset /path/to/save/class_predictions
+```
+
+For local run, setup `data`, `cluster_index`, `classes`, `checkpoint` and `save` parameters in predict.sh and run
+```
+$ bash scripts/prediction.sh
 ```
 or call prediction.py like
 ```
-$ git checkout origin/prediction
-$ python predict.py [-h] [--data_predict DATA_PREDICT]
-                    [--cluster_index CLUSTER_INDEX] [--checkpoint PATH]
-                    [--classes CLASSES] [--save_dir SAVE_DIR]
+$ python predict.py [-h] [--data DATA] [--cluster_index CLUSTER_INDEX]
+                    [--checkpoint PATH] [--classes CLASSES] [--save SAVE]
                     [--arch {alexnet,vgg16}] [--sobel]
                     [--cluster_alg {KMeans,PIC}] [--batch BATCH] [--top_n TOP_N]
 
 arguments:
   -h, --help            show this help message and exit
-  --data_predict        path to directory to predict
+  --data                Path to directory to predict
   --cluster_index       path to clustering index file (default: cluster_index)
   --checkpoint          path to checkpoint (default: None)
   --classes             path to json file with classes description (default: classes.json)
-  --save_dir            path to dir to save results (default: <don't save>)
+  --save                path to dir to save results (default: <don't save>)
   --arch                CNN architecture. alexnet or vgg16 (default: vgg16)
   --sobel               Sobel filtering
-  --cluster_alg         clustering algorithm. KMeans or PIC (default: Kmeans)
+  --cluster_alg         clustering algorithm (default: Kmeans)
   --batch               mini-batch size (default: 256)
   --top_n               top N for accuracy (default: 1)
 ```
