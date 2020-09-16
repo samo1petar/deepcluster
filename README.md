@@ -67,7 +67,7 @@ Note: `data` parameter needs to point to one level above directory with images. 
 
 Note: if `save` parameter is set, script will create one dir for every centroid. Only the centroids with dominating classes ( > 30% of the same class ) will have class name in dir name.
 
-For docker run
+For docker run (build image first)
 ```
 $ bash docker_scripts/test.sh /path/to/dataset [optional: /path/to/save/data]
 ```
@@ -95,9 +95,16 @@ arguments:
 ```
 ### Train
 
-Set up parameters in train.sh and run
+Train script is really not used for this project. It's here and it works. Fine tune script is used instead.
+
+For docker run (build image first)
 ```
-$ bash train.sh
+$ bash docker_scripts/train.sh /path/to/dataset /path/to/save/experiment
+```
+
+For local run, setup `data`, `exp` and `resume` parameters in train.sh and run
+```
+$ bash scripts/train.sh
 ```
 or call python script directly
 ```
