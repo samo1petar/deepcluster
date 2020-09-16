@@ -31,3 +31,22 @@ def compute_features(dataloader, model, N, batch):
                 features[i * batch:] = aux
 
     return features
+
+
+def compute_tensor_features(dataloader, model, batch):
+    model.eval()
+    with torch.no_grad():
+        for i, (input_tensor, target) in enumerate(dataloader):
+            print (i, '/', len(dataloader), end='\r')
+            input_var = torch.autograd.Variable(input_tensor.cuda())
+            aux = model(input_var)
+
+            if aux.shape[0] == batch:
+                if i == 0:
+                    features = aux.unsqueeze(0)
+                    targets = target.unsqueeze(0)
+                else:
+                    features = torch.cat((aux.unsqueeze(0), features), 0)
+                    targets = torch.cat((target.unsqueeze(0), targets), 0)
+
+    return features, targets

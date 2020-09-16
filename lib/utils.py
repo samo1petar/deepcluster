@@ -1,11 +1,20 @@
 import os
 import datetime
+import json
 import numpy as np
 import pickle
 import json
 from shutil import copyfile
 from torch.utils.data.sampler import Sampler
 from typing import Dict, List, Tuple
+
+
+def save_losses(train_losses, test_losses, path):
+    with open(path, 'w') as f:
+        json.dump({
+            'train': train_losses,
+            'test': test_losses,
+        }, f, indent=4)
 
 
 def visualize(
