@@ -42,7 +42,6 @@ def parse_args():
     parser.add_argument('--dropout', type=float, default=0.5, help='dropout percentage in Dropout layers (default: 0.5')
     parser.add_argument('--seed', type=int, default=None, help='random seed (default: None)')
 
-
     return parser.parse_args()
 
 

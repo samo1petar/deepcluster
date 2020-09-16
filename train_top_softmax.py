@@ -35,9 +35,8 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=200, help='number of total epochs to run (default: 200)')
     parser.add_argument('--checkpoints', type=int, default=250000, help='how many iterations between two checkpoints (default: 25000)')
     parser.add_argument('--verbose', action='store_true', help='chatty')
-    parser.add_argument('--dropout', type=float, default=0.5, help='dropout percentage in Dropout layers (default: 0.5')
+    parser.add_argument('--dropout', type=float, default=0.5, help='dropout percentage in Dropout layers (default: 0.5)')
     parser.add_argument('--seed', type=int, default=None, help='random seed (default: None)')
-
 
     return parser.parse_args()
 

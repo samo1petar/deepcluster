@@ -1,11 +1,11 @@
 #!/bin/bash
 
 CUDA_VISIBLE_DEVICES=0 python train_top_softmax.py \
-    --data '/home/david/Datasets/Flickr/Flickr25K' \
+    --data '/path/to/data/like/Flickr25K' \
     --arch 'vgg16' \
     --batch 16 \
-    --resume '/home/david/Projects/deepcluster/checkpoint.pth.tar' \
-    --exp '/home/david/Projects/deepcluster/experiments/exp_5_softmax' \
+    --resume '/path/to/checkpoint.pth.tar' \
+    --exp '/path/to/experiments/dir' \
     --lr 0.0005 \
     --wd -5 \
     --workers 6 \

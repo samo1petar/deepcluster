@@ -113,7 +113,7 @@ For docker run (build image first)
 $ bash docker_scripts/train.sh /path/to/dataset /path/to/save/experiment
 ```
 
-For local run, setup `data`, `exp` and `resume` parameters in train.sh and run
+For local run, setup `data`, `exp` and `resume` parameters in scripts/train.sh and run
 ```
 $ bash scripts/train.sh
 ```
@@ -162,7 +162,7 @@ For docker run (build image first)
 $ bash docker_scripts/train_fine_tune.sh /path/to/dataset /path/to/save/experiment
 ```
 
-For local run, setup `data`, `exp` and `resume` parameters in train_fine_tune.sh and run
+For local run, setup `data`, `exp` and `resume` parameters in scripts/train_fine_tune.sh and run
 ```
 $ bash scripts/train_fine_tune.sh
 ```
@@ -211,7 +211,7 @@ For docker run (build image first)
 $ bash docker_scripts/predict.sh /path/to/dataset /path/to/save/class_predictions
 ```
 
-For local run, setup `data`, `cluster_index`, `classes`, `checkpoint` and `save` parameters in predict.sh and run
+For local run, setup `data`, `cluster_index`, `classes`, `checkpoint` and `save` parameters in scripts/predict.sh and run
 ```
 $ bash scripts/prediction.sh
 ```
@@ -240,7 +240,40 @@ arguments:
 
 For docker run (build image first)
 ```
-$ bash 
+$ bash docker_scripts/train_top_softmax.sh /path/to/dataset /path/to/save/experiment
+```
+For local run, setup `data`, `resume` and `experiment` parameters in scripts/train_top_softmax.sh and run
+```
+$ bash scripts/train_top_softmax.sh
+```
+or call train_top_softmax.py like
+```
+$ python train_top_softmax.py [-h] [--data DATA] [--arch {alexnet,vgg16}]
+                              [--sobel] [--batch BATCH] [--resume PATH]
+                              [--experiment PATH]
+                              [--learning_rate LEARNING_RATE]
+                              [--weight_decay WEIGHT_DECAY] [--workers WORKERS]
+                              [--start_epoch START_EPOCH] [--epochs EPOCHS]
+                              [--checkpoints CHECKPOINTS] [--verbose]
+                              [--dropout DROPOUT] [--seed SEED]
+
+arguments:
+  -h, --help            show this help message and exit
+  --data                Path to dataset.
+  --experiment, --exp   path to dir where train will be saved
+  --resume              path to checkpoint (default: None)
+  --arch                CNN architecture
+  --sobel               Sobel filtering
+  --batch               mini-batch size (default: 256)
+  --learning_rate, --lr learning rate
+  --weight_decay, --wd  weight decay
+  --workers             number of data loading workers (default: 4)
+  --start_epoch         manual epoch number (useful on restarts) (default: 0)
+  --epochs              number of total epochs to run (default: 200)
+  --checkpoints         how many iterations between two checkpoints (default: 25000)
+  --verbose             chatty
+  --dropout             dropout percentage in Dropout layers (default: 0.5)
+  --seed                random seed (default: None)
 ```
 
 ## Code description
