@@ -1,6 +1,7 @@
 import faiss
 import numpy as np
 from PIL import Image
+from random import shuffle
 from scipy.sparse import csr_matrix
 import torch.utils.data as data
 import torch
@@ -30,6 +31,27 @@ class ReassignedDataset(data.Dataset):
             pseudolabel = label_to_idx[pseudolabels[j]]
             images.append((path, pseudolabel))
         return images
+
+
+class OriginalDataset(data.Dataset):
+    """A dataset where the new images labels are given in argument.
+    Args:
+        image_indexes (list): list of data indexes
+        pseudolabels (list): list of labels for each data
+        dataset (list): list of tuples with paths to images
+        transform (callable, optional): a function/transform that takes in
+                                        an PIL image and returns a
+                                        transformed version
+    """
+
+    def __init__(self, dataset, transform=None):
+        self.imgs = self.make_dataset(dataset)
+        self.transform = transform
+
+    def make_dataset(self, dataset):
+        shuffle(dataset)
+        return dataset
+
 
     def __getitem__(self, index):
         """
@@ -118,6 +140,26 @@ def cluster_assign(images_lists, dataset):
                             normalize])
 
     return ReassignedDataset(image_indexes, pseudolabels, dataset, t)
+
+
+def cluster_assign_with_original_labels(dataset):
+    """Creates a dataset from clustering, with clusters as labels.
+    Args:
+        images_lists (list of list): for each cluster, the list of image indexes
+                                    belonging to this cluster
+        dataset (list): initial dataset
+    Returns:
+        ReassignedDataset(torch.utils.data.Dataset): a dataset with clusters as
+                                                     labels
+    """
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    t = transforms.Compose([transforms.RandomResizedCrop(224),
+                            transforms.RandomHorizontalFlip(),
+                            transforms.ToTensor(),
+                            normalize])
+
+    return OriginalDataset(dataset, t)
 
 
 def preprocess_features(npdata, pca=256):
