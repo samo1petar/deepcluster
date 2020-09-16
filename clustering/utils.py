@@ -6,6 +6,7 @@ from scipy.sparse import csr_matrix
 import torch.utils.data as data
 import torch
 import torchvision.transforms as transforms
+from typing import Dict, Tuple, Union
 
 
 class ReassignedDataset(data.Dataset):
@@ -244,3 +245,20 @@ def make_adjacencyW(I, D, sigma):
     data = np.reshape(np.delete(res_D, 0, 1), (1, -1))
     adj_matrix = csr_matrix((data[0], indices[0], indptr), shape=(V, V))
     return adj_matrix
+
+
+def match_predictions_and_cls(
+        I    : np.ndarray,
+        imgs : Tuple[str, int],
+        data : Dict[int, Dict[str, Union[str, int]]],
+) -> Dict:
+
+    predictions = {}
+    for x in range(len(I)):
+        predictions[imgs[x][0]] = {
+            'cls_str'  : [data[str(i)] for i in I[x] if i != -1],
+            'cls_id'   : I[x],
+            'real_cls' : imgs[x][0].rsplit('/', 2)[1],
+        }
+
+    return predictions

@@ -2,6 +2,7 @@ import os
 import datetime
 import numpy as np
 import pickle
+import json
 from shutil import copyfile
 from torch.utils.data.sampler import Sampler
 from typing import Dict, List, Tuple
@@ -27,6 +28,25 @@ def visualize(
             dest = os.path.join(dir_path, str(i) + '_' + cls + '_' + name + '.png')
             copyfile(path, dest)
     return dir_name
+
+
+def visualize_prediction(
+        predictions,
+        path,
+):
+    import datetime
+    import os
+    from shutil import copyfile
+    d = datetime.datetime.now()
+    dir_name = os.path.join(path, 'exp_{}-{}-{}_{}-{}-{}'.format(d.year, d.month, d.day, d.hour, d.minute, d.second))
+    os.mkdir(dir_name)
+
+    for key in predictions:
+        dir_path = os.path.join(dir_name, predictions[key]['cls_str'][0])
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+        dest = os.path.join(dir_path, key.rsplit('/', 2)[1] + '_' + key.rsplit('/', 1)[1])
+        copyfile(key, dest)
 
 
 def accuracy(data: Dict, acc_limit: float = 0.3) -> None:
@@ -125,3 +145,44 @@ class Logger(object):
         self.data.append(train_point)
         with open(os.path.join(self.path), 'wb') as fp:
             pickle.dump(self.data, fp, -1)
+
+
+def get_available_classes(data: Dict, thr_perc: float = 0.3) -> Dict[int, str]:
+
+    avaliable_cls = {}
+
+    for key in data.keys():
+        if data[key]['max_size'] / data[key]['size'] > thr_perc:
+            avaliable_cls[key] = data[key]['max_cls']
+
+    return avaliable_cls
+
+
+def clean_predictions(I: np.ndarray, available_classes: Dict[int, str]) -> np.ndarray:
+    available_classes_indexes = set(available_classes.keys())
+    new_I = []
+    for i in I:
+        new_i = []
+        for x in i:
+            if len(new_i) >= 5: break
+            if str(x) in available_classes_indexes:
+                new_i.append(x)
+        if len(new_i) < 5:
+            new_i.extend([-1] * (5 - len(new_i)))
+        new_I.append(new_i)
+    return np.array(new_I)
+
+
+def save_predictions_imgs(predictions: Dict[str, Dict], save_dir: str) -> None :
+    for x in predictions:
+        dir_path = os.path.join(save_dir, predictions[x]['cls_str'][0])
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+        copyfile(x, os.path.join(dir_path, x.rsplit('/', 2)[1] + '_' + x.rsplit('/', 1)[1]))
+
+
+def save_predictions_json(predictions: Dict[str, Dict], save_dir: str, file_name: str = 'predictions.json') -> None :
+    for x in predictions:
+        predictions[x]['cls_id'] = predictions[x]['cls_id'].tolist()
+    with open(os.path.join(save_dir, file_name), 'w')as f:
+        json.dump(predictions, f)
