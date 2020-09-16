@@ -33,6 +33,22 @@ class ReassignedDataset(data.Dataset):
             images.append((path, pseudolabel))
         return images
 
+    def __getitem__(self, index):
+        """
+        Args:
+            index (int): index of data
+        Returns:
+            tuple: (image, pseudolabel) where pseudolabel is the cluster of index datapoint
+        """
+        path, pseudolabel = self.imgs[index]
+        img = pil_loader(path)
+        if self.transform is not None:
+            img = self.transform(img)
+        return img, pseudolabel
+
+    def __len__(self):
+        return len(self.imgs)
+
 
 class OriginalDataset(data.Dataset):
     """A dataset where the new images labels are given in argument.
