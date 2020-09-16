@@ -1,5 +1,4 @@
 import argparse
-from IPython import embed
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -21,10 +20,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description='PyTorch Implementation of DeepCluster in Python3')
 
     parser.add_argument('--data', type=str, help='Path to dataset.')
+    parser.add_argument('--save', type=str, default='', help='Path to dir where data will be saved.')
     parser.add_argument('--arch', default='vgg16', type=str, choices=['alexnet', 'vgg16'], help='CNN architecture')
     parser.add_argument('--sobel', action='store_true', help='Sobel filtering')
-    parser.add_argument('--nmb_cluster', '--k', type=int, default=10000, help='number of cluster for k-means (default: 10000)')
-    parser.add_argument('--cluster_alg', default='KMeans', type=str, choices=['KMeans', 'PIC'], help='clustering algorithm (default: Kmeans)')
+    parser.add_argument('--nmb_cluster', '--k', type=int, default=1000, help='number of cluster for k-means (default: 1000)')
+    parser.add_argument('--cluster_alg', default='KMeans', type=str, choices=['KMeans', 'PIC'], help='clustering algorithm (default: KMeans)')
     parser.add_argument('--batch', default=256, type=int, help='mini-batch size (default: 256)')
     parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to checkpoint (default: None)')
 
@@ -32,6 +32,12 @@ def parse_args():
 
 
 def main(args):
+
+    assert args.arch == 'vgg16', 'Only vgg16 architecture is supported for now.'
+    assert args.cluster_alg == 'KMeans', 'Only KMeans clustering algorithm is supported for now.'
+
+    if not args.sobel:
+        print ('Warning: All development is done with sobel filter active. Running without sobel filter is unchecked teritory.')
 
     model = models.__dict__[args.arch](sobel=args.sobel)
     model.features = torch.nn.DataParallel(model.features)
@@ -78,11 +84,11 @@ def main(args):
 
     accuracy(data)
 
-    save_dir = visualize(data)
-
-    check_classes(save_dir, train_dataset.imgs)
-
-    embed()
+    if args.save:
+        print ('Saving images to ', args.save, end='\r')
+        save_dir = visualize(data, path=args.save)
+        check_classes(save_dir, train_dataset.imgs)
+        print ('Saving images to ', args.save, 'done')
 
 
 if __name__ == '__main__':

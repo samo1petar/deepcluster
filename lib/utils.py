@@ -19,9 +19,13 @@ def save_losses(train_losses, test_losses, path):
 
 def visualize(
         data      : Dict,
-        path      : str   = '/home/results',
+        path      : str,
         acc_limit : float = 0.3,
-) -> str: # TODO fix path
+) -> str:
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     d = datetime.datetime.now()
     dir_name = os.path.join(path, 'exp_{}-{}-{}_{}-{}-{}'.format(d.year, d.month, d.day, d.hour, d.minute, d.second))
     os.mkdir(dir_name)

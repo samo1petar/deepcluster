@@ -20,7 +20,7 @@ $ pip install -r requirements.txt
 
 - Python3.6 +
 - GPU
-- Cuda 10.2
+- Cuda 10.1
 
 ## Pretrained models
 
@@ -43,11 +43,36 @@ $ bash docker_run.sh
 
 ## Run
 
-#### Test
-
-Setup parameters in test.sh script and run
+There are five scripts that you can run. Test, train, predict, fine_tune and softmax. Every script is described bellow.
+To call any of the docker scripts, build docker image first.
 ```
-$ bash test.sh
+$ bash docker_build.sh
+```
+
+For every script there are three ways of running them.
+- docker call (ex. `$ bash docker_scripts/test.sh`)
+- scripts dir call (ex. `$ bash scripts/test.py`)
+- direct call (ex. `$ python test.py`)
+
+All three ways are described for every script.
+
+### Test
+
+Test script takes pretrained model, computes features from given dataset, and runs KMeans clustering algorithm on those features.
+If `save` parameter is set, it also saves images grouped by KMeans.
+
+Note: `data` parameter needs to point to one level above directory with images. For example, data='/path/to/dataset', where images are in subdir like '/path/to/dataset/car/image_N.jpg'
+
+Note: if `save` parameter is set, script will create one dir for every centroid. Only the centroids with dominating classes ( > 30% of the same class ) will have class name in dir name.
+
+For docker run
+```
+$ bash docker_scripts/test.sh /path/to/dataset [optional: /path/to/save/data]
+```
+
+For local run, setup `data`, `save` and `resume` parameters in scripts/test.sh script and run
+```
+$ bash scripts/test.sh
 ```
 or call python script directly
 ```
@@ -58,14 +83,15 @@ $ python test.py [-h] [--data DATA] [--arch {alexnet,vgg16}] [--sobel]
 arguments:
   -h, --help            show this help message and exit
   --data                Path to dataset
-  --arch                CNN architecture. [alexnet or vgg16]
+  --save                Path to dir where data will be saved, if empty nothing will be saved
+  --arch                CNN architecture. [alexnet or vgg16], only vgg16 is supported for now
   --sobel               Sobel filtering
-  --nmb_cluster (--k)   number of cluster for k-means (default: 10000)
+  --nmb_cluster (--k)   number of cluster for k-means (default: 1000)
   --cluster_alg         clustering algorithm. KMeans or PIC (default: KMeans)
   --batch               mini-batch size (default: 256)
   --resume              path to checkpoint (default: None)
 ```
-#### Train
+### Train
 
 Set up parameters in train.sh and run
 ```
