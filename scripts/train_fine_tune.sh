@@ -1,13 +1,13 @@
 #!/bin/bash
 
 CUDA_VISIBLE_DEVICES=0 python train_fine_tune.py \
-    --data '/home/david/Datasets/Flickr/Flickr25K' \
+    --data '/path/to/dataset/like/Flickr25K' \
     --arch 'vgg16' \
     --nmb_cluster 1000 \
     --cluster_alg 'KMeans' \
     --batch 16 \
-    --resume '/home/david/Projects/deepcluster/deepcluster_models/vgg16/checkpoint.pth.tar' \
-    --exp '/home/david/Projects/deepcluster/experiments/exp_8_test' \
+    --resume '/path/to/checkpoint.pth.tar' \
+    --exp '/path/to/save/experiments/dir/experiment_name' \
     --lr 0.0005 \
     --wd -5 \
     --workers 6 \
