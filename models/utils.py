@@ -16,7 +16,7 @@ def compute_features(dataloader, model, N, batch):
     # discard the label information in the dataloader
     with torch.no_grad():
         for i, (input_tensor, _) in enumerate(dataloader):
-            print ('Computing the features...', i, '/', len(dataloader), flush=True)
+            print ('Computing the features...', i, '/', len(dataloader), end='\r', flush=True)
             input_var = torch.autograd.Variable(input_tensor.cuda())
             aux = model(input_var).data.cpu().numpy()
 
