@@ -25,8 +25,6 @@ def parse_args():
     parser.add_argument('--data', type=str, help='Path to dataset.')
     parser.add_argument('--arch', type=str, default='vgg16', choices=['alexnet', 'vgg16'], help='CNN architecture')
     parser.add_argument('--sobel', action='store_true', help='Sobel filtering')
-    parser.add_argument('--nmb_cluster', '--k', type=int, default=10000, help='number of cluster for k-means (default: 10000)')
-    parser.add_argument('--cluster_alg', default='KMeans', type=str, choices=['KMeans', 'PIC'], help='clustering algorithm (default: Kmeans)')
     parser.add_argument('--batch', type=int, default=256, help='mini-batch size (default: 256)')
     parser.add_argument('--resume', type=str, default='', metavar='PATH', help='path to checkpoint (default: None)')
     parser.add_argument('--experiment', '--exp', type=str, metavar='PATH', help='path to dir where train will be saved')
@@ -35,9 +33,7 @@ def parse_args():
     parser.add_argument('--workers', type=int, default=6, help='number of data loading workers (default: 4)')
     parser.add_argument('--start_epoch', type=int, default=0, help='manual epoch number (useful on restarts) (default: 0)')
     parser.add_argument('--epochs', type=int, default=200, help='number of total epochs to run (default: 200)')
-    parser.add_argument('--momentum', type=float, default=0.9, help='momentum (default: 0.9)')
     parser.add_argument('--checkpoints', type=int, default=250000, help='how many iterations between two checkpoints (default: 25000)')
-    parser.add_argument('--reassign', type=float, default=1., help='how many epochs of training between two consecutive reassignments of clusters (default: 1)')
     parser.add_argument('--verbose', action='store_true', help='chatty')
     parser.add_argument('--dropout', type=float, default=0.5, help='dropout percentage in Dropout layers (default: 0.5')
     parser.add_argument('--seed', type=int, default=None, help='random seed (default: None)')
@@ -57,7 +53,7 @@ def main(args):
     # CNN
     if args.verbose:
         print('Architecture: {}'.format(args.arch))
-    model = models.__dict__[args.arch](sobel=args.sobel, dropout=args.dropout)
+    model = models.__dict__[args.arch](sobel=args.sobel)
     fd = int(model.top_layer.weight.size()[1])
     model.top_layer = None
     model.features = torch.nn.DataParallel(model.features)
@@ -114,7 +110,7 @@ def main(args):
     train_features, train_targets = compute_tensor_features(train_dataloader, model, args.batch)
     test_features, test_targets = compute_tensor_features(test_dataloader, model, args.batch)
 
-    top_layer = nn.Sequential(nn.Linear(4096, 4096), nn.Dropout(0.0), nn.Linear(4096, 251)) #, nn.Softmax(dim=1))
+    top_layer = nn.Sequential(nn.Linear(4096, 4096), nn.Dropout(args.dropout), nn.Linear(4096, 251)) #, nn.Softmax(dim=1))
     top_layer[0].weight.data.normal_(0, 0.01)
     top_layer[0].bias.data.zero_()
     top_layer[2].weight.data.normal_(0, 0.01)

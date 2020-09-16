@@ -204,7 +204,7 @@ arguments:
 ```
 
 
-#### Prediction
+### Prediction
 
 For docker run (build image first)
 ```
@@ -234,6 +234,13 @@ arguments:
   --cluster_alg         clustering algorithm (default: Kmeans)
   --batch               mini-batch size (default: 256)
   --top_n               top N for accuracy (default: 1)
+```
+
+### Train top layer (with Softmax)
+
+For docker run (build image first)
+```
+$ bash 
 ```
 
 ## Code description
