@@ -39,6 +39,10 @@ Create docker image:
 $ bash docker_build.sh
 ```
 
+## Dataset
+
+Data used in development of this repo is Flickr25K and Flickr15K. You can download them from [here](https://cvssp.org/data/Flickr25K/cag17.html).
+
 ## Run
 
 There are five scripts that you can run. Test, train, predict, fine_tune and softmax. Every script is described bellow.
