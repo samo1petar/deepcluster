@@ -34,11 +34,9 @@ Download index from [here](https://drive.google.com/file/d/1EJtOQBbkroq43TvmQA2I
 
 ## Docker
 
-To use docker, first checkout branch `origin/feature/docker`.
+Create docker image:
 ```
-$ git checkout origin/feature/docker
 $ bash docker_build.sh
-$ bash docker_run.sh
 ```
 
 ## Run
