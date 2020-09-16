@@ -1,13 +1,13 @@
 #!/bin/bash
 
-CUDA_VISIBLE_DEVICES=0 python train_fine_tune.py \
+CUDA_VISIBLE_DEVICES=0 python train_top_softmax.py \
     --data '/home/david/Datasets/Flickr/Flickr25K' \
     --arch 'vgg16' \
     --nmb_cluster 1000 \
     --cluster_alg 'KMeans' \
     --batch 16 \
     --resume '/home/david/Projects/deepcluster/checkpoint.pth.tar' \
-    --exp '/home/david/Projects/deepcluster/experiments/exp_4_softmax_drop_0.8' \
+    --exp '/home/david/Projects/deepcluster/experiments/exp_5_softmax' \
     --lr 0.0005 \
     --wd -5 \
     --workers 6 \

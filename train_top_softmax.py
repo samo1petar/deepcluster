@@ -114,7 +114,7 @@ def main(args):
     train_features, train_targets = compute_tensor_features(train_dataloader, model, args.batch)
     test_features, test_targets = compute_tensor_features(test_dataloader, model, args.batch)
 
-    top_layer = nn.Sequential(nn.Linear(4096, 4096), nn.Dropout(0.8), nn.Linear(4096, 251)) #, nn.Softmax(dim=1))
+    top_layer = nn.Sequential(nn.Linear(4096, 4096), nn.Dropout(0.0), nn.Linear(4096, 251)) #, nn.Softmax(dim=1))
     top_layer[0].weight.data.normal_(0, 0.01)
     top_layer[0].bias.data.zero_()
     top_layer[2].weight.data.normal_(0, 0.01)
