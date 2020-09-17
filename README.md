@@ -18,6 +18,9 @@ $ pip install -r requirements.txt
 
 ## Docker
 
+Download image from `591746741767.dkr.ecr.us-east-2.amazonaws.com/deepcluster:latest`
+
+
 Before creating docker image, download the model checkpoint ([here](https://drive.google.com/file/d/1uOgJ6KXHbeg2c-MlzHk6TPp8SSqYaolv/view?usp=sharing)) 
  and save it to repo like `.../deepcluster/checkpoint.pth.tar`.
 
@@ -30,6 +33,7 @@ Note: mkdir `/path/to/save/experiment` before running any of these.
 ```
 $ bash docker_scripts/test.sh /path/to/dataset [optional: /path/to/save/data]
 $ bash docker_scripts/train.sh /path/to/dataset /path/to/save/experiment
+$ bash docker_scripts/predict.sh /path/to/dataset /path/to/save/class_predictions
 $ bash docker_scripts/train_fine_tune.sh /path/to/dataset /path/to/save/experiment
 $ bash docker_scripts/train_top_softmax.sh /path/to/dataset /path/to/save/experiment
 ```
