@@ -37,8 +37,8 @@ def visualize(
             dir_path = os.path.join(dir_name, str(key))
         os.mkdir(dir_path)
         for i, path in enumerate(data[key]['paths']):
-            cls, name = path.rsplit('.', 1)[0].rsplit('/', 2)[1:]
-            dest = os.path.join(dir_path, str(i) + '_' + cls + '_' + name + '.png')
+            cls, name = path.rsplit('/', 2)[1:]
+            dest = os.path.join(dir_path, str(i) + '_' + cls + '_' + name)
             copyfile(path, dest)
     return dir_name
 
