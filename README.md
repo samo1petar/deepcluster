@@ -284,7 +284,3 @@ arguments:
   --dropout             dropout percentage in Dropout layers (default: 0.5)
   --seed                random seed (default: None)
 ```
-
-## Code description
-
-TODO
