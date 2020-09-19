@@ -188,6 +188,8 @@ def clean_predictions(I: np.ndarray, available_classes: Dict[int, str]) -> np.nd
 
 def save_predictions_imgs(predictions: Dict[str, Dict], save_dir: str) -> None :
     for x in predictions:
+        if len(predictions[x]['cls_str']) == 0:
+            continue
         dir_path = os.path.join(save_dir, predictions[x]['cls_str'][0])
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
