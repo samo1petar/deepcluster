@@ -85,7 +85,7 @@ It is considered that all other centroids can't be assigned with a single class.
 
 Note: If seeds are not set, you can expect slightly different results from call to call.
 This is due to random initialization of centroids start position of KMeans algorithm.
-With the given model you should expect around 77% accuracy on Flickr25K.
+With the given model you should expect around 77% accuracy on Flickr.
 
 For docker run (build image first)
 ```
