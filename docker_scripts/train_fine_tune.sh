@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker run --runtime=nvidia --rm --name deepcluster_cont \
+docker run --runtime=nvidia --rm --shm-size 16G --name deepcluster_cont \
     --mount type=bind,source=$1,target='/home/data' \
     --mount type=bind,source=$2,target='/home/results' \
     deepcluster python train_fine_tune.py \
